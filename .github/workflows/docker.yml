@@ -28,6 +28,13 @@ jobs:
         id: meta
         run: echo "tag=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_OUTPUT
 
+      - name: Create .env file
+        run: |
+          echo "PORT=8080" > .env
+          echo "ENV=production" >> .env
+          echo "GIN_MODE=release" >> .env
+          echo "DOMAIN=${{ secrets.MY_DOMAIN }}" >> .env
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:

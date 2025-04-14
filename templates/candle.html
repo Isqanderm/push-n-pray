@@ -2,5 +2,19 @@
     <p>Your candle has been lit! 🔥</p>
     <img src="{{ .ImageURL }}" alt="Release Candle">
     <p><strong>Markdown for MR:</strong></p>
-    <code>![Release Candle]({{ .ImageURL }})</code>
+    <div class="candle-code">
+        <code id="markdown-code">![Release Candle]({{ .ImageURL }})</code>
+        <button onclick="copyMarkdown()">Copy</button>
+    </div>
 </div>
+
+<script>
+    function copyMarkdown() {
+        const code = document.getElementById("markdown-code").textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            alert("Copied to clipboard!");
+        }, err => {
+            alert("Failed to copy text: " + err);
+        });
+    }
+</script>
