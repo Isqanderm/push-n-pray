@@ -1,0 +1,38 @@
+body {
+    font-family: sans-serif;
+    background: #fffbe9;
+    color: #333;
+    text-align: center;
+    padding: 2em;
+}
+
+input, textarea {
+    display: block;
+    margin: 1em auto;
+    padding: 0.5em;
+    width: 300px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 0.5em 1em;
+    border: none;
+    background: orange;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.candle-result img {
+    max-height: 300px;
+    margin: 1em 0;
+}
+
+code {
+    display: block;
+    background: #f0f0f0;
+    padding: 0.5em;
+    margin-top: 1em;
+    font-family: monospace;
+}
