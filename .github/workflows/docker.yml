@@ -10,9 +10,6 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
-    env:
-      IMAGE_TAG: ghcr.io/${{ github.repository }}:latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,9 +24,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image tag (lowercase)
+        id: meta
+        run: echo "tag=ghcr.io/${GITHUB_REPOSITORY,,}:latest" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_TAG }}
+          tags: ${{ steps.meta.outputs.tag }}
