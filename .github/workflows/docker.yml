@@ -34,6 +34,7 @@ jobs:
           echo "ENV=production" >> .env
           echo "GIN_MODE=release" >> .env
           echo "DOMAIN=${{ secrets.MY_DOMAIN }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
       - name: Build and push
         uses: docker/build-push-action@v5

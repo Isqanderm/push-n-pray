@@ -2,10 +2,10 @@
 
 > Light a candle for your deploy. Bless your CI with hope and memes 🙏
 
-![Example](https://yourdomain.com/candles/example-id/image)
+![Example](https://push-n-pray.tech-pioneer.info)
 
-[![Docker Image CI](https://github.com/your-org/your-repo/actions/workflows/docker.yml/badge.svg)](https://github.com/your-org/your-repo/actions/workflows/docker.yml)
-[![Demo](https://img.shields.io/badge/demo-live-green)](https://yourdomain.com)
+[![Docker Image CI](https://github.com/Isqanderm/push-n-pray/actions/workflows/docker.yml/badge.svg)](https://github.com/Isqanderm/push-n-pray/actions/workflows/docker.yml/badge.svg)
+[![Demo](https://img.shields.io/badge/demo-live-green)](https://push-n-pray.tech-pioneer.info)
 
 ---
 
@@ -28,7 +28,7 @@
 ### 🚀 How to use
 
 1. Visit the web UI (or call API)
-2. Enter your name and a wish (e.g. _“Please no 500 on prod 🙏”_)
+2. Enter a wish (e.g. _“Please no 500 on prod 🙏”_)
 3. Click "Submit candle"
 4. Embed the result:
 
@@ -53,9 +53,10 @@ Visit [http://localhost:8080](http://localhost:8080)
 
 ### 💥 Environment Variables
 
-| Name       | Description            | Default |
-|------------|------------------------|---------|
-| `PORT`     | Port to run the server | `8080`  |
+| Name           | Description            | Default          |
+|----------------|------------------------|------------------|
+| `PORT`         | Port to run the server | `8080`           |
+| `DATABASE_URL` | URL to Postgres        | postgresql://... |
 
 ---
 
@@ -67,7 +68,6 @@ Create a new candle.
 
 **Form fields:**
 
-- `author` — your name
 - `message` — your wish or blessing
 
 **Response (HTML):** returns a preview with markdown embed

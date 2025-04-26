@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"github.com/fogleman/gg"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 	"html/template"
 	"image"
@@ -16,12 +18,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
+	"time"
 )
-
-func init() {
-	_ = godotenv.Load()
-}
 
 type Candle struct {
 	ID      string
@@ -29,8 +27,7 @@ type Candle struct {
 }
 
 var (
-	candles = make(map[string]Candle)
-	lock    sync.RWMutex
+	db *pgx.Conn
 )
 
 func wrapText(dc *gg.Context, text string, maxWidth float64) []string {
@@ -158,7 +155,31 @@ func imageToPaletted(img image.Image, palette color.Palette) *image.Paletted {
 	return paletted
 }
 
+func initDB() {
+	var err error
+	dbURL := os.Getenv("DATABASE_URL")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	db, err = pgx.Connect(ctx, dbURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	_, err = db.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS candles (
+			id UUID PRIMARY KEY,
+			message TEXT NOT NULL
+		)
+	`)
+	if err != nil {
+		log.Fatalf("Unable to create table: %v", err)
+	}
+}
+
 func main() {
+	_ = godotenv.Load()
+	initDB()
+	defer db.Close(context.Background())
+
 	gin.SetMode(gin.ReleaseMode)
 	domain := os.Getenv("DOMAIN")
 	r := gin.Default()
@@ -176,10 +197,11 @@ func main() {
 			message = message[:100]
 		}
 		id := uuid.NewString()
-		candle := Candle{ID: id, Message: message}
-		lock.Lock()
-		candles[id] = candle
-		lock.Unlock()
+		_, err := db.Exec(context.Background(), "INSERT INTO candles (id, message) VALUES ($1, $2)", id, message)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "DB insert error")
+			return
+		}
 		tmpl.ExecuteTemplate(c.Writer, "candle.html", map[string]interface{}{
 			"ID":       id,
 			"ImageURL": template.URL(domain + "/candles/" + id + "/image"),
@@ -188,13 +210,13 @@ func main() {
 
 	r.GET("/candles/:id/image", func(c *gin.Context) {
 		id := c.Param("id")
-		lock.RLock()
-		candle, ok := candles[id]
-		lock.RUnlock()
-		if !ok {
+		var message string
+		err := db.QueryRow(context.Background(), "SELECT message FROM candles WHERE id=$1", id).Scan(&message)
+		if err != nil {
 			c.String(http.StatusNotFound, "Candle not found")
 			return
 		}
+		candle := Candle{ID: id, Message: message}
 		img, err := generateCandleImage(candle)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "Image generation error: %v", err)
