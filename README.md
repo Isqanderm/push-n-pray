@@ -87,3 +87,4 @@ See `.github/workflows/docker.yml`
 Made with memes, Go and love by your friendly DevOps priest.  
 Bless your pipelines. Amen. 🙏
 
+![Release Candle](https://push-n-pray.tech-pioneer.info/candles/48027082-b488-4f10-a526-062a58123cf7/image)
