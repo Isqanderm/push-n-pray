@@ -4,17 +4,29 @@
     <p><strong>Markdown for MR:</strong></p>
     <div class="candle-code">
         <code id="markdown-code">![Release Candle]({{ .ImageURL }})</code>
-        <button onclick="copyMarkdown()">Copy</button>
+        <button id="copy-button" onclick="copyMarkdown()">Copy</button>
     </div>
 </div>
 
 <script>
     function copyMarkdown() {
         const code = document.getElementById("markdown-code").textContent;
+        const button = document.getElementById("copy-button");
+
         navigator.clipboard.writeText(code).then(() => {
-            alert("Copied to clipboard!");
-        }, err => {
-            alert("Failed to copy text: " + err);
+            const originalText = button.textContent;
+            button.textContent = "Copied!";
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 5000);
+        }).catch(err => {
+            button.textContent = "Error!";
+            setTimeout(() => {
+                button.textContent = "Copy";
+            }, 3000);
         });
     }
 </script>

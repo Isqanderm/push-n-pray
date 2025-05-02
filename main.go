@@ -30,6 +30,37 @@ var (
 	db *pgx.Conn
 )
 
+func reconnectDB() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	newDB, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return err
+	}
+
+	if db != nil {
+		_ = db.Close(context.Background())
+	}
+	db = newDB
+	log.Println("✅ Reconnected to the database")
+	return nil
+}
+
+func ensureDBConnection() error {
+	if db == nil {
+		return reconnectDB()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	err := db.Ping(ctx)
+	if err != nil {
+		log.Println("🔌 Lost DB connection, attempting reconnect...")
+		return reconnectDB()
+	}
+	return nil
+}
+
 func wrapText(dc *gg.Context, text string, maxWidth float64) []string {
 	words := strings.Fields(text)
 	if len(words) == 0 {
@@ -96,7 +127,6 @@ func generateCandleImage(candle Candle) ([]byte, error) {
 			dc.DrawStringAnchored(line, float64(baseWidth/2), y, 0.5, 0)
 		}
 
-		// Draw candle
 		candleY := padding + len(lines)*lineHeight + candleOffset
 		candleX := baseWidth/2 - 2
 		for y := 0; y < 10; y++ {
@@ -156,15 +186,12 @@ func imageToPaletted(img image.Image, palette color.Palette) *image.Paletted {
 }
 
 func initDB() {
-	var err error
-	dbURL := os.Getenv("DATABASE_URL")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	db, err = pgx.Connect(ctx, dbURL)
-	if err != nil {
+	if err := reconnectDB(); err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
-	_, err = db.Exec(ctx, `
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS candles (
 			id UUID PRIMARY KEY,
 			message TEXT NOT NULL
@@ -191,6 +218,10 @@ func main() {
 	})
 
 	r.POST("/candles", func(c *gin.Context) {
+		if err := ensureDBConnection(); err != nil {
+			c.String(http.StatusInternalServerError, "DB reconnect failed")
+			return
+		}
 		message := c.PostForm("message")
 		message = strings.TrimSpace(message)
 		if len(message) > 100 {
@@ -209,6 +240,10 @@ func main() {
 	})
 
 	r.GET("/candles/:id/image", func(c *gin.Context) {
+		if err := ensureDBConnection(); err != nil {
+			c.String(http.StatusInternalServerError, "DB reconnect failed")
+			return
+		}
 		id := c.Param("id")
 		var message string
 		err := db.QueryRow(context.Background(), "SELECT message FROM candles WHERE id=$1", id).Scan(&message)
